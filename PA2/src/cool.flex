@@ -43,6 +43,7 @@ extern YYSTYPE cool_yylval;
  *  Add Your own definitions here
  */
 int nesting_level = 0;
+int n_chars = 0;
 
 %}
 
@@ -67,7 +68,13 @@ OF              (?i:of)
 DARROW          =>
 NEW             (?i:new)
 ISVOID          (?i:isvoid)
-STR_CONST       "[a-zA-Z0-9 \t\n\f\r\v]*"
+STR_START       \"
+STR_END         \"
+STR_ESCAPE      [b\t\f\n]
+STR_ESCAPE2     \\.
+STR_NORMAL      .
+STR_CONST       \".*\"
+STR_CONST_NULL  \".*\0.*\"
 INT_CONST       [0-9]+
 BOOL_CONST      (t(?i:rue))|(f(?i:alse))
 TYPEID          [A-Z][a-zA-z0-9_]*
@@ -83,7 +90,7 @@ COMMENT_INLINE  --.*\n
 COMMENT_START   "(*"
 COMMENT_END     "*)"
 
-%x COMMENT_BLOCK
+%x COMMENT_BLOCK STRING
 %%
 
  /*
@@ -135,7 +142,43 @@ COMMENT_END     "*)"
 {OF}            { return(OF);}
 {NEW}           { return(NEW);}
 {ISVOID}        { return(ISVOID);}
-{STR_CONST}     { return(STR_CONST);}
+{STR_CONST_NULL} { 
+    cool_yylval.error_msg = "String contains null character";
+    return ERROR;
+}
+{STR_START} {
+    string_buf_ptr = &string_buf[0];
+    *string_buf_ptr = '"';
+    string_buf_ptr++;
+    n_chars++;
+    BEGIN(STRING);
+}
+{STR_ESCAPE} {
+    *string_buf_ptr = yytext[0];
+    string_buf_ptr++;
+    *string_buf_ptr = yytext[1];
+    string_buf_ptr++;
+    n_chars += 2;
+}
+{STR_ESCAPE2} {
+    *string_buf_ptr = yytext[1];
+    string_buf_ptr++;
+    n_chars += 1;
+}
+{STR_NORMAL} {
+    printf(yytext);
+    *string_buf_ptr = yytext[0];
+    string_buf_ptr++;
+    n_chars += 1;
+}
+{STR_END} {
+    *string_buf_ptr = '"';
+    n_chars += 1;
+    string_buf_ptr++;
+    *string_buf_ptr = '\0';
+    BEGIN(INITIAL);
+    return STR_CONST;
+}
 {INT_CONST} {
     cool_yylval.symbol = inttable.add_string(yytext);
     return INT_CONST;
