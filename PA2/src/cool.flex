@@ -42,6 +42,7 @@ extern YYSTYPE cool_yylval;
 /*
  *  Add Your own definitions here
  */
+int nesting_level = 0;
 
 %}
 
@@ -49,19 +50,108 @@ extern YYSTYPE cool_yylval;
  * Define names for regular expressions here.
  */
 
+CLASS           (?i:class)
+ELSE            (?i:else)
+FI              (?i:fi)
+IF              (?i:if)
+IN              (?i:in)
+INHERITS        (?i:inherits)
+LET             (?i:let)
+LOOP            (?i:loop)
+POOL            (?i:pool)
+THEN            (?i:then)
+WHILE           (?i:while)
+CASE            (?i:case)
+ESAC            (?i:esac)
+OF              (?i:of)
 DARROW          =>
+NEW             (?i:new)
+ISVOID          (?i:isvoid)
+STR_CONST       "[a-zA-Z0-9 \t\n\f\r\v]*"
+INT_CONST       [0-9]+
+BOOL_CONST      (t(?i:rue))|(f(?i:alse))
+TYPEID          [A-Z][a-zA-z0-9_]*
+OBJECTID        [a-z][a-zA-z0-9_]*
+ASSIGN          <-
+NOT             (?i:not)
+LE              <=|<|=
+ERROR           error
 
+WHITESPACE      [ \t\f\r\v]
+NEWLINE         \n
+COMMENT_INLINE  --.*\n
+COMMENT_START   "(*"
+COMMENT_END     "*)"
+
+%x COMMENT_BLOCK
 %%
 
  /*
   *  Nested comments
   */
+{COMMENT_START} { 
+    BEGIN(COMMENT_BLOCK);
+    nesting_level++;
+    }
+{COMMENT_END}   { 
+    nesting_level--;
+    if (nesting_level < 0)
+        BEGIN(INITIAL); 
+}
+<COMMENT_BLOCK>{COMMENT_END} { BEGIN(INITIAL); }
+<COMMENT_BLOCK>\n {++curr_lineno;}
+<COMMENT_BLOCK><<EOF>> {
+    cool_yylval.error_msg = "EOF in comment";
+    BEGIN(INITIAL);
+    return ERROR;
+}
+<COMMENT_BLOCK>. {;}
 
 
  /*
   *  The multiple-character operators.
   */
-{DARROW}		{ return (DARROW); }
+{DARROW}        { return (DARROW); }
+{IF}            { return (IF);}
+{ELSE}          { return (ELSE);}
+{INHERITS}      { return (INHERITS);}
+{WHITESPACE}    { ;}
+{NEWLINE} { 
+    ++curr_lineno;
+}
+{CLASS}         { return(CLASS);}
+{FI}            { return(FI);}
+{LET}           { return(LET);}
+{LOOP}          { return(LOOP);}
+{POOL}          { return(POOL);}
+{THEN}          { return(THEN);}
+{IN}            { return(IN);}
+{WHILE}         { return(WHILE);}
+{CASE}          { return(CASE);}
+{ESAC}          { return(ESAC);}
+{OF}            { return(OF);}
+{NEW}           { return(NEW);}
+{ISVOID}        { return(ISVOID);}
+{STR_CONST}     { return(STR_CONST);}
+{INT_CONST} {
+    cool_yylval.symbol = inttable.add_string(yytext);
+    return INT_CONST;
+}
+{BOOL_CONST} {
+    cool_yylval.symbol = inttable.add_string(yytext);
+    return(BOOL_CONST);
+}
+{TYPEID} { 
+    cool_yylval.symbol = inttable.add_string(yytext);
+    return(TYPEID);
+}
+{ASSIGN}        { return(ASSIGN);}
+{NOT}           { return(NOT);}
+{LE}            { return(LE);}
+{OBJECTID} {
+    cool_yylval.symbol = inttable.add_string(yytext);
+    return(OBJECTID);
+}
 
  /*
   * Keywords are case-insensitive except for the values true and false,
