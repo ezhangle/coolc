@@ -2,11 +2,14 @@
 ASSN = 2
 CLASS= cs143
 CLASSDIR= /usr/class/cs143/cool
-LIB= -lfl
+# The libfl library doesn't define any symbols and passing this option to the
+# linker only causes trouble. I suspect that in the past it would define some
+# symbols (e.g. yylex and yywrap), but it no longer does. libfl.a does
+# instead, but I'm unclear as how to obtain it withou building flex manually.
+#LIB= -lfl
 
-SRC= cool.flex test.cl README 
+SRC= cool.flex src/test.cl README
 CSRC= lextest.cc utilities.cc stringtab.cc handle_flags.cc
-TSRC= mycoolc
 HSRC= 
 CGEN= cool-lex.cc
 HGEN=
@@ -16,54 +19,46 @@ LSRC= Makefile
 OBJS= ${CFIL:.cc=.o}
 OUTPUT= test.output
 
-CPPINCLUDE= -I. -I${CLASSDIR}/include/PA${ASSN} -I${CLASSDIR}/src/PA${ASSN}
+CPPINCLUDE= -I. -I./include/ -I./src/
 
 
-FFLAGS= -d -ocool-lex.cc
+# Added '--noyywrap', because it's not defined anywhere. I believe that the
+# original intention  was to add '-lfs', which was assumed to define 'yywrap',
+# but that's not the case for libfl.so that's on my system.
+FFLAGS= --noyywrap -d -osrc/cool-lex.cc
 
 CC=g++
 CFLAGS= -g -Wall -Wno-unused -Wno-write-strings ${CPPINCLUDE}
 FLEX=flex ${FFLAGS}
 DEPEND = ${CC} -MM ${CPPINCLUDE}
 
-
-source : ${SRC} ${TSRC} ${LSRC} ${LIBS} lsource
-
-lsource: ${LSRC}
-
-${OUTPUT}:	lexer test.cl
-	@rm -f test.output
-	-./lexer test.cl >test.output 2>&1 
-
-lexer: ${OBJS}
-	${CC} ${CFLAGS} ${OBJS} ${LIB} -o lexer
-
-.cc.o:
+%.o: src/%.cc
+	@echo Compile
 	${CC} ${CFLAGS} -c $<
 
-cool-lex.cc: cool.flex 
-	${FLEX} cool.flex
+${OUTPUT}: lexer src/test.cl
+	@echo Compile
+	@rm -f test.output
+	-./lexer src/test.cl >test.output 2>&1
 
-dotest:	lexer test.cl
-	./lexer test.cl
+lexer: ${OBJS}
+	@echo Compile2
+	${CC} ${CFLAGS} ${OBJS} ${LIB} -o lexer
+
+
+src/cool-lex.cc: src/cool.flex
+	@echo Compile
+	${FLEX} src/cool.flex
+
+dotest: lexer src/test.cl
+	./lexer src/test.cl
 
 ${LIBS}:
+	@echo Compile
 	${CLASSDIR}/etc/link-object ${ASSN} $@
 
 # These dependencies allow you to get the starting files for
 # the assignment.  They will not overwrite a file you already have.
-
-${SRC} :								
-	${CLASSDIR}/etc/copy-skel ${ASSN} ${SRC}
-
-${LSRC} :
-	${CLASSDIR}/etc/link-shared ${ASSN} ${LSRC}
-
-${TSRC} ${CSRC}:
-	-ln -s ${CLASSDIR}/src/PA${ASSN}/$@ $@
-
-${HSRC}:
-	-ln -s ${CLASSDIR}/include/PA${ASSN}/$@ $@
 
 submit-clean: ${OUTPUT}
 	-rm -f *.s core ${OBJS} lexer cool-lex.cc *~ parser cgen semant
