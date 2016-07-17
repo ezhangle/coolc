@@ -93,12 +93,11 @@ COMMENT_END     "*)"
     BEGIN(COMMENT_BLOCK);
     nesting_level++;
     }
-{COMMENT_END}   { 
+<COMMENT_BLOCK>{COMMENT_END} {
     nesting_level--;
-    if (nesting_level < 0)
+    if (nesting_level == 0)
         BEGIN(INITIAL); 
 }
-<COMMENT_BLOCK>{COMMENT_END} { BEGIN(INITIAL); }
 <COMMENT_BLOCK>\n {++curr_lineno;}
 <COMMENT_BLOCK><<EOF>> {
     cool_yylval.error_msg = "EOF in comment";
@@ -106,6 +105,10 @@ COMMENT_END     "*)"
     return ERROR;
 }
 <COMMENT_BLOCK>. {;}
+{COMMENT_END} { 
+    cool_yylval.error_msg = "Unmatched *)";
+    return ERROR;
+}
 
 
  /*
