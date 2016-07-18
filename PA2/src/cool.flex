@@ -70,7 +70,7 @@ NEW             (?i:new)
 ISVOID          (?i:isvoid)
 STR_START       \"
 STR_END         \"
-STR_ESCAPE      [b\t\f\n]
+STR_ESCAPE      \\b|\\t|\\f|\\n
 STR_ESCAPE2     \\.
 STR_NORMAL      .
 STR_CONST       \".*\"
@@ -148,36 +148,42 @@ COMMENT_END     "*)"
 }
 {STR_START} {
     string_buf_ptr = &string_buf[0];
-    *string_buf_ptr = '"';
-    string_buf_ptr++;
-    n_chars++;
+    n_chars = 0;
     BEGIN(STRING);
 }
-{STR_ESCAPE} {
+<STRING>{STR_ESCAPE} {
+    /* printf("Escaped special: %s\n", yytext); */
     *string_buf_ptr = yytext[0];
     string_buf_ptr++;
     *string_buf_ptr = yytext[1];
     string_buf_ptr++;
     n_chars += 2;
 }
-{STR_ESCAPE2} {
+<STRING>{STR_ESCAPE2} {
+    /* printf("Escaped normal: %s\n", yytext); */
     *string_buf_ptr = yytext[1];
     string_buf_ptr++;
     n_chars += 1;
 }
-{STR_NORMAL} {
-    printf(yytext);
+<STRING>{STR_END} {
+    *string_buf_ptr = '\0';
+    BEGIN(INITIAL);
+    /* printf("string buffer: %s\n", string_buf); */
+    if (n_chars <= MAX_STR_CONST)
+    {
+        cool_yylval.symbol = inttable.add_string(string_buf);
+        return(STR_CONST);
+    } else
+    {
+        cool_yylval.error_msg = "String constant too long";
+        return ERROR;
+    }
+}
+<STRING>{STR_NORMAL} {
+    /* printf("Normal: %s\n", yytext); */
     *string_buf_ptr = yytext[0];
     string_buf_ptr++;
     n_chars += 1;
-}
-{STR_END} {
-    *string_buf_ptr = '"';
-    n_chars += 1;
-    string_buf_ptr++;
-    *string_buf_ptr = '\0';
-    BEGIN(INITIAL);
-    return STR_CONST;
 }
 {INT_CONST} {
     cool_yylval.symbol = inttable.add_string(yytext);
