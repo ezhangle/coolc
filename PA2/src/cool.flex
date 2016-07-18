@@ -71,7 +71,7 @@ ISVOID          (?i:isvoid)
 STR_START       \"
 STR_END         \"
 STR_ESCAPE      \\b|\\t|\\f|\\n
-STR_ESCAPE2     \\.
+STR_ESCAPE2     \\.|\\\n
 STR_NORMAL      .
 STR_CONST       \".*\"
 STR_CONST_NULL  \".*\0.*\"
@@ -151,15 +151,42 @@ COMMENT_END     "*)"
     n_chars = 0;
     BEGIN(STRING);
 }
-<STRING>{STR_ESCAPE} {
-    /* printf("Escaped special: %s\n", yytext); */
-    *string_buf_ptr = yytext[0];
-    string_buf_ptr++;
-    *string_buf_ptr = yytext[1];
-    string_buf_ptr++;
-    n_chars += 2;
+<STRING><<EOF>> {
+    cool_yylval.error_msg = "EOF in string constant";
+    curr_lineno++;
+    BEGIN(INITIAL);
+    return(ERROR);
+}
+<STRING>{NEWLINE} {
+    cool_yylval.error_msg = "Unterminated string constant";
+    curr_lineno++;
+    BEGIN(INITIAL);
+    return(ERROR);
 }
 <STRING>{STR_ESCAPE2} {
+    /* printf("Escaped normal: %s\n", yytext); */
+    if (yytext[1] == 'n')
+    {
+        *string_buf_ptr = '\n';
+    } else if (yytext[1] == 'b')
+    {
+        *string_buf_ptr = '\b';
+    } else if (yytext[1] == 't')
+    {
+        *string_buf_ptr = '\t';
+    } else if (yytext[1] == 'f')
+    {
+        *string_buf_ptr = '\f';
+    } else
+    {
+        *string_buf_ptr = yytext[1];
+    }
+    if (yytext[1] == '\n')
+        curr_lineno++;
+    string_buf_ptr++;
+    n_chars += 1;
+}
+<STRING>{STR_ESCAPE} {
     /* printf("Escaped normal: %s\n", yytext); */
     *string_buf_ptr = yytext[1];
     string_buf_ptr++;
