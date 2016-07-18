@@ -51,6 +51,10 @@ int n_chars = 0;
  * Define names for regular expressions here.
  */
 
+ /*
+  * Keywords are case-insensitive except for the values true and false,
+  * which must begin with a lower-case letter.
+  */
 CLASS           (?i:class)
 ELSE            (?i:else)
 FI              (?i:fi)
@@ -163,6 +167,12 @@ COMMENT_END     "*)"
     BEGIN(INITIAL);
     return(ERROR);
 }
+ /*
+  *  String constants (C syntax)
+  *  Escape sequence \c is accepted for all characters c. Except for 
+  *  \n \t \b \f, the result is c.
+  *
+  */
 <STRING>{STR_ESCAPE2} {
     /* printf("Escaped normal: %s\n", yytext); */
     if (yytext[1] == 'n')
@@ -231,19 +241,8 @@ COMMENT_END     "*)"
     cool_yylval.symbol = inttable.add_string(yytext);
     return(OBJECTID);
 }
-
- /*
-  * Keywords are case-insensitive except for the values true and false,
-  * which must begin with a lower-case letter.
-  */
-
-
- /*
-  *  String constants (C syntax)
-  *  Escape sequence \c is accepted for all characters c. Except for 
-  *  \n \t \b \f, the result is c.
-  *
-  */
-
+{STR_NORMAL} {
+    return(int(yytext[0]));
+}
 
 %%
