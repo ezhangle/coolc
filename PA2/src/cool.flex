@@ -87,7 +87,7 @@ OBJECTID        [a-z][a-zA-z0-9_]*
 OBJECTID_INVALID [^a-z]/[a-z][a-zA-z0-9_]*
 ASSIGN          <-
 NOT             (?i:not)
-LE              <=|<|=
+LE              <=
 ERROR           error
 
 WHITESPACE      [ \t\f\r\v]
@@ -95,6 +95,8 @@ NEWLINE         \n
 COMMENT_INLINE  --
 COMMENT_START   "(*"
 COMMENT_END     "*)"
+
+LEADING_UNDERSCORE ^_
 
 %x COMMENT_BLOCK STRING COMMENT_INLINE_BLOCK
 %%
@@ -166,7 +168,15 @@ COMMENT_END     "*)"
 {ISVOID}        { return(ISVOID);}
 {ASSIGN}        { return(ASSIGN);}
 {NOT}           { return(NOT);}
-{LE}            { return(LE);}
+{LE} { 
+    return(LE);
+}
+
+{LEADING_UNDERSCORE} {
+    cool_yylval.error_msg = yytext;
+    return ERROR;
+}
+
 {STR_CONST_NULL} { 
     cool_yylval.error_msg = "String contains null character";
     return ERROR;
