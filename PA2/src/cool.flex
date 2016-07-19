@@ -242,7 +242,7 @@ LEADING_UNDERSCORE ^_
     *string_buf_ptr = '\0';
     BEGIN(INITIAL);
     /* printf("string buffer: %s\n", string_buf); */
-    if (n_chars <= MAX_STR_CONST)
+    if (n_chars < MAX_STR_CONST)
     {
         cool_yylval.symbol = inttable.add_string(string_buf);
         return(STR_CONST);
