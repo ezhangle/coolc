@@ -79,10 +79,12 @@ STR_ESCAPE2     \\.|\\\n
 STR_NORMAL      .
 STR_CONST       \".*\"
 STR_CONST_NULL  \".*\0.*\"
+NULL_CHAR       \0
 INT_CONST       [0-9]+
 BOOL_CONST      (t(?i:rue))|(f(?i:alse))
 TYPEID          [A-Z][a-zA-z0-9_]*
 OBJECTID        [a-z][a-zA-z0-9_]*
+OBJECTID_INVALID [^a-z]/[a-z][a-zA-z0-9_]*
 ASSIGN          <-
 NOT             (?i:not)
 LE              <=|<|=
@@ -90,17 +92,17 @@ ERROR           error
 
 WHITESPACE      [ \t\f\r\v]
 NEWLINE         \n
-COMMENT_INLINE  --.*\n
+COMMENT_INLINE  --
 COMMENT_START   "(*"
 COMMENT_END     "*)"
 
-%x COMMENT_BLOCK STRING
+%x COMMENT_BLOCK STRING COMMENT_INLINE_BLOCK
 %%
 
  /*
   *  Nested comments
   */
-{COMMENT_START} { 
+<INITIAL,COMMENT_BLOCK>{COMMENT_START} { 
     BEGIN(COMMENT_BLOCK);
     nesting_level++;
     }
@@ -120,6 +122,22 @@ COMMENT_END     "*)"
     cool_yylval.error_msg = "Unmatched *)";
     return ERROR;
 }
+
+{COMMENT_INLINE} { 
+    BEGIN(COMMENT_INLINE_BLOCK);
+}
+<COMMENT_INLINE_BLOCK><<EOF>> {
+    BEGIN(INITIAL);
+}
+
+<COMMENT_INLINE_BLOCK>\n {
+    curr_lineno++;
+    BEGIN(INITIAL);
+}
+<COMMENT_INLINE_BLOCK>. {
+    ;
+}
+
 
 
  /*
@@ -146,8 +164,15 @@ COMMENT_END     "*)"
 {OF}            { return(OF);}
 {NEW}           { return(NEW);}
 {ISVOID}        { return(ISVOID);}
+{ASSIGN}        { return(ASSIGN);}
+{NOT}           { return(NOT);}
+{LE}            { return(LE);}
 {STR_CONST_NULL} { 
     cool_yylval.error_msg = "String contains null character";
+    return ERROR;
+}
+{NULL_CHAR} { 
+    cool_yylval.error_msg = yytext;
     return ERROR;
 }
 {STR_START} {
@@ -227,19 +252,24 @@ COMMENT_END     "*)"
     return INT_CONST;
 }
 {BOOL_CONST} {
-    cool_yylval.symbol = inttable.add_string(yytext);
+    if (yytext[0] == 'f' || yytext[0] == 'F')
+        cool_yylval.boolean = false;
+    else
+        cool_yylval.boolean = true;
+
     return(BOOL_CONST);
 }
 {TYPEID} { 
     cool_yylval.symbol = inttable.add_string(yytext);
     return(TYPEID);
 }
-{ASSIGN}        { return(ASSIGN);}
-{NOT}           { return(NOT);}
-{LE}            { return(LE);}
 {OBJECTID} {
     cool_yylval.symbol = inttable.add_string(yytext);
     return(OBJECTID);
+}
+_/{OBJECTID} {
+    cool_yylval.error_msg = yytext;
+    return(ERROR);
 }
 {STR_NORMAL} {
     return(int(yytext[0]));
