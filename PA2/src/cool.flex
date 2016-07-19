@@ -282,6 +282,11 @@ _/{OBJECTID} {
     return(ERROR);
 }
 {STR_NORMAL} {
+    if (yytext[0] == '_')
+    {
+        cool_yylval.error_msg = yytext;
+        return(ERROR);
+    }
     return(int(yytext[0]));
 }
 
