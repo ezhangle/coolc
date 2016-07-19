@@ -95,6 +95,7 @@ NEWLINE         \n
 COMMENT_INLINE  --
 COMMENT_START   "(*"
 COMMENT_END     "*)"
+INVALID_CHARS   [!#$%\^&_>?`\[\]\\\|]
 
 LEADING_UNDERSCORE ^_
 
@@ -278,6 +279,10 @@ LEADING_UNDERSCORE ^_
     return(OBJECTID);
 }
 _/{OBJECTID} {
+    cool_yylval.error_msg = yytext;
+    return(ERROR);
+}
+{INVALID_CHARS} {
     cool_yylval.error_msg = yytext;
     return(ERROR);
 }
