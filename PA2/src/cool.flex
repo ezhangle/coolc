@@ -95,7 +95,7 @@ NEWLINE         \n
 COMMENT_INLINE  --
 COMMENT_START   "(*"
 COMMENT_END     "*)"
-INVALID_CHARS   [!#$%\^&_>?`\[\]\\\|]
+INVALID_CHARS   [!#$%\^&_>?`\[\]\\\|\01\02\03\04]
 
 LEADING_UNDERSCORE ^_
 
