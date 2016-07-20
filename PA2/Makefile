@@ -1,7 +1,4 @@
 
-ASSN = 2
-CLASS= cs143
-CLASSDIR= /usr/class/cs143/cool
 # The libfl library doesn't define any symbols and passing this option to the
 # linker only causes trouble. I suspect that in the past it would define some
 # symbols (e.g. yylex and yywrap), but it no longer does. libfl.a does
@@ -10,16 +7,31 @@ CLASSDIR= /usr/class/cs143/cool
 
 SRC= cool.flex src/test.cl README
 CSRC= lextest.cc utilities.cc stringtab.cc handle_flags.cc
-HSRC= 
 CGEN= cool-lex.cc
-HGEN=
-LIBS= parser semant cgen
 CFIL= ${CSRC} ${CGEN}
 LSRC= Makefile
 OBJS= ${CFIL:.cc=.o}
 OUTPUT= test.output
+LEX_BIN = bin
 
-CPPINCLUDE= -I. -I./include/ -I./src/
+CPPINCLUDE= -I. -I./include/ -I./src/ -I./bin/
+
+#-----------------------
+#  SHELL COMMANDS 
+#-----------------------
+MKDIR   = mkdir -p
+
+#-----------------------
+#  SOURCE/OBJECT FILES 
+#-----------------------
+source_files = lextest.cc utilities.cc stringtab.cc handle_flags.cc
+object_files = $(patsubst %.cc, $(LEX_BIN)/%.o, $(source_files))
+
+#-----------------------
+#  TARGETS 
+#-----------------------
+chkdirs:
+	$(MKDIR) $(LEX_BIN)
 
 
 # Added '--noyywrap', because it's not defined anywhere. I believe that the
@@ -32,42 +44,23 @@ CFLAGS= -g -Wall -Wno-unused -Wno-write-strings ${CPPINCLUDE}
 FLEX=flex ${FFLAGS}
 DEPEND = ${CC} -MM ${CPPINCLUDE}
 
-%.o: src/%.cc
-	@echo Compile
-	${CC} ${CFLAGS} -c $<
+bin/%.o: src/%.cc
+	${CC} ${CFLAGS} -c $< -o $@
 
-${OUTPUT}: lexer src/test.cl
-	@echo Compile
-	@rm -f test.output
-	-./lexer src/test.cl >test.output 2>&1
-
-lexer: ${OBJS}
-	@echo Compile2
-	${CC} ${CFLAGS} ${OBJS} ${LIB} -o lexer
-
+bin/lexer: ${chkdirs} ${object_files}
+	${CC} ${CFLAGS} ${object_files} ${LIB} -o bin/lexer
 
 src/cool-lex.cc: src/cool.flex
-	@echo Compile
 	${FLEX} src/cool.flex
-
-dotest: lexer src/test.cl
-	./lexer src/test.cl
-
-${LIBS}:
-	@echo Compile
-	${CLASSDIR}/etc/link-object ${ASSN} $@
 
 # These dependencies allow you to get the starting files for
 # the assignment.  They will not overwrite a file you already have.
 
-submit-clean: ${OUTPUT}
-	-rm -f *.s core ${OBJS} lexer cool-lex.cc *~ parser cgen semant
-
 clean :
-	-rm -f ${OUTPUT} *.s core ${OBJS} lexer cool-lex.cc *~ parser cgen semant
+	-rm -f  *.s core ${OBJS} lexer src/cool-lex.cc *~ parser cgen semant
 
 clean-compile:
-	@-rm -f core ${OBJS} cool-lex.cc ${LSRC}
+	@-rm -f core ${OBJS} src/cool-lex.cc ${LSRC}
 
 %.d: %.cc ${SRC} ${LSRC}
 	${SHELL} -ec '${DEPEND} $< | sed '\''s/\($*\.o\)[ :]*/\1 $@ : /g'\'' > $@'
