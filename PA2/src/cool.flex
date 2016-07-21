@@ -39,18 +39,15 @@ extern int verbose_flag;
 
 extern YYSTYPE cool_yylval;
 
-/*
- *  Add Your own definitions here
- */
 int nesting_level = 0;
 int n_chars = 0;
 
 %}
 
-/*
- * Define names for regular expressions here.
- */
-
+/* ---------------------------------
+   NAMES FOR REGULAR EXPRESSIONS.
+   ---------------------------------- */
+ /* KEYWORDS */
  /*
   * Keywords are case-insensitive except for the values true and false,
   * which must begin with a lower-case letter.
@@ -69,9 +66,11 @@ WHILE           (?i:while)
 CASE            (?i:case)
 ESAC            (?i:esac)
 OF              (?i:of)
-DARROW          =>
+NOT             (?i:not)
 NEW             (?i:new)
 ISVOID          (?i:isvoid)
+
+ /* STRINGS */
 STR_START       \"
 STR_END         \"
 STR_ESCAPE      \\b|\\t|\\f|\\n
@@ -79,32 +78,37 @@ STR_ESCAPE2     \\.|\\\n
 STR_NORMAL      .
 STR_CONST       \".*\"
 STR_CONST_NULL  \".*\0.*\"
-NULL_CHAR       \0
 INT_CONST       [0-9]+
 BOOL_CONST      (t(?i:rue))|(f(?i:alse))
 TYPEID          [A-Z][a-zA-z0-9_]*
 OBJECTID        [a-z][a-zA-z0-9_]*
 OBJECTID_INVALID [^a-z]/[a-z][a-zA-z0-9_]*
+
+/* OPERATORS */
+DARROW          =>
 ASSIGN          <-
-NOT             (?i:not)
 LE              <=
 ERROR           error
 
-WHITESPACE      [ \t\f\r\v]
-NEWLINE         \n
+/* COMMENTS */
 COMMENT_INLINE  --
 COMMENT_START   "(*"
 COMMENT_END     "*)"
-INVALID_CHARS   [!#$%\^&_>?`\[\]\\\|\01\02\03\04]
 
-LEADING_UNDERSCORE ^_
+/* CHARACTERS REQUIRING SPECIAL TREATMENT */
+WHITESPACE      [ \t\f\r\v]
+NEWLINE         \n
+INVALID_CHARS   [!#$%\^&_>?`\[\]\\\|\00\01\02\03\04]
 
+/* ---------------------------------
+   START CONDITIONS.
+   ---------------------------------- */
 %x COMMENT_BLOCK STRING COMMENT_INLINE_BLOCK
 %%
 
- /*
-  *  Nested comments
-  */
+ /* -----------------------------------
+    COMMENTS
+    ----------------------------------- */
 <INITIAL,COMMENT_BLOCK>{COMMENT_START} { 
     BEGIN(COMMENT_BLOCK);
     nesting_level++;
@@ -141,19 +145,12 @@ LEADING_UNDERSCORE ^_
     ;
 }
 
-
-
- /*
-  *  The multiple-character operators.
-  */
-{DARROW}        { return (DARROW); }
+ /* -----------------------------------
+    KEYWORDS
+    ----------------------------------- */
 {IF}            { return (IF);}
 {ELSE}          { return (ELSE);}
 {INHERITS}      { return (INHERITS);}
-{WHITESPACE}    { ;}
-{NEWLINE} { 
-    ++curr_lineno;
-}
 {CLASS}         { return(CLASS);}
 {FI}            { return(FI);}
 {LET}           { return(LET);}
@@ -167,23 +164,26 @@ LEADING_UNDERSCORE ^_
 {OF}            { return(OF);}
 {NEW}           { return(NEW);}
 {ISVOID}        { return(ISVOID);}
-{ASSIGN}        { return(ASSIGN);}
 {NOT}           { return(NOT);}
-{LE} { 
-    return(LE);
-}
 
-{LEADING_UNDERSCORE} {
-    cool_yylval.error_msg = yytext;
-    return ERROR;
-}
+ /* -----------------------------------
+    OPERATORS
+    ----------------------------------- */
+{DARROW}        { return (DARROW); }
+{ASSIGN}        { return(ASSIGN);}
+{LE}            { return(LE);}
 
+ /* -----------------------------------
+    STRING CONSTANTS
+    ----------------------------------- */
+ /*
+  *  String constants (C syntax)
+  *  Escape sequence \c is accepted for all characters c. Except for 
+  *  \n \t \b \f, the result is c.
+  *
+  */
 {STR_CONST_NULL} { 
     cool_yylval.error_msg = "String contains null character";
-    return ERROR;
-}
-{NULL_CHAR} { 
-    cool_yylval.error_msg = yytext;
     return ERROR;
 }
 {STR_START} {
@@ -203,14 +203,7 @@ LEADING_UNDERSCORE ^_
     BEGIN(INITIAL);
     return(ERROR);
 }
- /*
-  *  String constants (C syntax)
-  *  Escape sequence \c is accepted for all characters c. Except for 
-  *  \n \t \b \f, the result is c.
-  *
-  */
 <STRING>{STR_ESCAPE2} {
-    /* printf("Escaped normal: %s\n", yytext); */
     if (yytext[1] == 'n')
     {
         *string_buf_ptr = '\n';
@@ -233,7 +226,6 @@ LEADING_UNDERSCORE ^_
     n_chars += 1;
 }
 <STRING>{STR_ESCAPE} {
-    /* printf("Escaped normal: %s\n", yytext); */
     *string_buf_ptr = yytext[1];
     string_buf_ptr++;
     n_chars += 1;
@@ -241,7 +233,6 @@ LEADING_UNDERSCORE ^_
 <STRING>{STR_END} {
     *string_buf_ptr = '\0';
     BEGIN(INITIAL);
-    /* printf("string buffer: %s\n", string_buf); */
     if (n_chars < MAX_STR_CONST)
     {
         cool_yylval.symbol = inttable.add_string(string_buf);
@@ -253,15 +244,22 @@ LEADING_UNDERSCORE ^_
     }
 }
 <STRING>{STR_NORMAL} {
-    /* printf("Normal: %s\n", yytext); */
     *string_buf_ptr = yytext[0];
     string_buf_ptr++;
     n_chars += 1;
 }
+
+ /* -----------------------------------
+    INTEGER CONSTANTS
+    ----------------------------------- */
 {INT_CONST} {
     cool_yylval.symbol = inttable.add_string(yytext);
     return INT_CONST;
 }
+
+ /* -----------------------------------
+    BOOLEAN CONSTANTS
+    ----------------------------------- */
 {BOOL_CONST} {
     if (yytext[0] == 'f' || yytext[0] == 'F')
         cool_yylval.boolean = false;
@@ -270,6 +268,10 @@ LEADING_UNDERSCORE ^_
 
     return(BOOL_CONST);
 }
+
+ /* -----------------------------------
+    OBJECTID/TYPEID
+    ----------------------------------- */
 {TYPEID} { 
     cool_yylval.symbol = inttable.add_string(yytext);
     return(TYPEID);
@@ -282,10 +284,18 @@ _/{OBJECTID} {
     cool_yylval.error_msg = yytext;
     return(ERROR);
 }
+
+ /* -----------------------------------
+    SINGLE CHARACTERS (valid and invalid)
+    ----------------------------------- */
 {INVALID_CHARS} {
     cool_yylval.error_msg = yytext;
     return(ERROR);
 }
+{NEWLINE} { 
+    ++curr_lineno;
+}
+{WHITESPACE}    { ;}
 {STR_NORMAL} {
     if (yytext[0] == '_')
     {
