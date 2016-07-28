@@ -9,9 +9,8 @@ RANLIB= gar -qs
 
 SRC= cool.y cool-tree.handcode.h good.cl bad.cl README
 CSRC= parser-phase.cc utilities.cc stringtab.cc dumptype.cc \
-      tree.cc cool-tree.cc tokens-lex.cc  handle_flags.cc 
-TSRC= myparser mycoolc cool-tree.aps
-CGEN= cool-parse.cc
+      tree.cc cool-tree.cc tokens-lex.cc  handle_flags.cc \
+      cool-parse.cc
 HGEN= cool-parse.h
 LIBS= lexer semant cgen
 CFIL= ${CSRC} ${CGEN}
@@ -32,7 +31,6 @@ FLEX=flex ${FFLAGS}
 BISON= bison ${BFLAGS}
 DEPEND = ${CC} -MM ${CPPINCLUDE}
 
-source: ${SRC} ${TSRC} ${LIBS} lsource
 
 lsource: ${LSRC}
 
@@ -73,7 +71,7 @@ submit-clean: ${OUTPUT}
 	-rm -f *.s core ${OBJS} ${CGEN} ${HGEN} lexer *~ parser cgen semant
 
 clean :
-	-rm -f ${OUTPUT} *.s core ${OBJS} ${CGEN} ${HGEN} lexer parser cgen semant *~ *.a *.o 
+	-rm -f ${OUTPUT} *.s core ${OBJS} ${CGEN} ${HGEN} parser cgen semant *~ *.a *.o
 
 clean-compile:
 	@-rm -f core ${OBJS} ${CGEN} ${HGEN} ${LSRC}
