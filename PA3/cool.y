@@ -136,6 +136,10 @@
     
     /* You will want to change the following line. */
     %type <features> dummy_feature_list
+
+    /* Andrzej's types */
+    %type <features> feature_list
+    %type <features> method
     
     /* Precedence declarations go here. */
     
@@ -163,10 +167,21 @@
     | CLASS TYPEID INHERITS TYPEID '{' dummy_feature_list '}' ';'
     { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
     ;
+
+    /* A simple class that has one feature - a method */
+    class	: CLASS TYPEID '{' method '}' ';'
+    { $$ = class_($2,idtable.add_string("Object"),$4,
+    stringtable.add_string(curr_filename)); }
+    ;
     
     /* Feature list may be empty, but no empty features in list. */
     dummy_feature_list:		/* empty */
     {  $$ = nil_Features(); }
+
+    /* A method that in the body has only a boolean const. */
+    method:  OBJECTID'('')'':' TYPEID '{' BOOL_CONST '}'';'
+    { $$ = single_Features(method($1, nil_Formals(), $5, bool_const($7)));
+    }
     
     
     /* end of grammar */
