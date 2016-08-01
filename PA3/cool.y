@@ -139,7 +139,8 @@
 
     /* Andrzej's types */
     %type <features> feature_list
-    %type <features> method
+    %type <feature> method
+    %type <feature> attribute
     %type <expression> expr
     
     /* Precedence declarations go here. */
@@ -175,17 +176,37 @@
     dummy_feature_list:		/* empty */
     {  $$ = nil_Features(); }
 
-    feature_list: method {;}
-    /* A method that in the body has only a boolean const. */
-    method:  OBJECTID'('')'':' TYPEID '{' expr '}'';' 
+    feature_list: method ';' feature_list
     {
-      $$ = single_Features(method($1, nil_Formals(), $5, $7));
+      $$ = append_Features(single_Features($1), $3);
     }
+    | attribute ';' feature_list
+    {
+      $$ = append_Features(single_Features($1), $3);
+    }
+    | ';' {$$ = nil_Features();}
+
+    /* A class method. */
+    method:  OBJECTID'('')'':' TYPEID '{' expr '}'
+    {
+      $$ = method($1, nil_Formals(), $5, $7);
+    }
+
+    /* An attribute variable. */
+    attribute:  OBJECTID':' TYPEID
+    {
+      $$ = attr($1, $3, no_expr());
+    }
+
     expr: BOOL_CONST
     { $$ = bool_const($1);
     }
     | INT_CONST
     { $$ = int_const($1);
+    }
+    | OBJECTID ASSIGN INT_CONST
+    {
+      $$ = assign($1, int_const($3));
     }
 
     expr: '(' expr ')' 
