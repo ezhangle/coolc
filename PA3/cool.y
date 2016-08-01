@@ -140,6 +140,7 @@
     /* Andrzej's types */
     %type <features> feature_list
     %type <features> method
+    %type <expression> expr
     
     /* Precedence declarations go here. */
     
@@ -161,28 +162,43 @@
     ;
     
     /* If no parent is specified, the class inherits from the Object class. */
-    class	: CLASS TYPEID '{' dummy_feature_list '}' ';'
+    class	: CLASS TYPEID '{' feature_list '}' ';'
     { $$ = class_($2,idtable.add_string("Object"),$4,
     stringtable.add_string(curr_filename)); }
     | CLASS TYPEID INHERITS TYPEID '{' dummy_feature_list '}' ';'
     { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
     ;
 
-    /* A simple class that has one feature - a method */
-    class	: CLASS TYPEID '{' method '}' ';'
-    { $$ = class_($2,idtable.add_string("Object"),$4,
-    stringtable.add_string(curr_filename)); }
-    ;
-    
     /* Feature list may be empty, but no empty features in list. */
+    feature_list: dummy_feature_list {;}
     dummy_feature_list:		/* empty */
     {  $$ = nil_Features(); }
 
+    feature_list: method {;}
     /* A method that in the body has only a boolean const. */
-    method:  OBJECTID'('')'':' TYPEID '{' BOOL_CONST '}'';'
-    { $$ = single_Features(method($1, nil_Formals(), $5, bool_const($7)));
+    method:  OBJECTID'('')'':' TYPEID '{' expr '}'';' 
+    {
+      $$ = single_Features(method($1, nil_Formals(), $5, $7));
     }
-    
+    expr: BOOL_CONST
+    { $$ = bool_const($1);
+    }
+    | INT_CONST
+    { $$ = int_const($1);
+    }
+
+    expr: '(' expr ')' 
+    {
+      $$ = $2;
+    }
+    | expr '+' expr
+    {
+      $$ = plus($1, $3);
+    }
+    | LET OBJECTID ':' TYPEID ASSIGN INT_CONST IN INT_CONST 
+    {
+      $$ = let($2, $4, int_const($6), int_const($8));
+    }
     
     /* end of grammar */
     %%
