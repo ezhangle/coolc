@@ -228,6 +228,10 @@
     {
       $$ = assign($1, int_const($3));
     }
+    | OBJECTID 
+    {
+      $$ = object($1);
+    }
 
     expr: '(' expr ')' 
     {
