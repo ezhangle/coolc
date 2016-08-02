@@ -254,6 +254,18 @@
     {
       $$ = let($2, $4, no_expr(), $6);
     }
+    | WHILE expr LOOP expr POOL
+    {
+      $$ = loop($2, $4);;
+    }
+    | NOT expr
+    {
+      $$ = comp($2);
+    }
+    | STR_CONST
+    {
+      $$ = string_const($1);
+    }
     expr: block
     {
       $$ = $1;
@@ -273,10 +285,10 @@
     {
       $$ = block($2);
     }
-    |'{' block '}'
+    | '{' block '}'
     {
       $$ = $2;
-    }
+    } 
     
     /* end of grammar */
     %%
