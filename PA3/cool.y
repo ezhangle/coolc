@@ -144,6 +144,8 @@
     %type <formal> arg
     %type <formals> arg_list
     %type <expression> expr
+    %type <expressions> expr_list
+    %type <expression> block
     
     /* Precedence declarations go here. */
     
@@ -251,6 +253,29 @@
     | LET OBJECTID ':' TYPEID IN expr 
     {
       $$ = let($2, $4, no_expr(), $6);
+    }
+    expr: block
+    {
+      $$ = $1;
+    }
+
+    expr_list: expr ';' expr_list
+    {
+      $$ = append_Expressions(single_Expressions($1), $3);  
+    }
+    | expr
+    {
+      $$ = single_Expressions($1);
+    }
+    | {$$ = nil_Expressions();}
+
+    block: '{' expr_list '}'
+    {
+      $$ = block($2);
+    }
+    |'{' block '}'
+    {
+      $$ = $2;
     }
     
     /* end of grammar */
