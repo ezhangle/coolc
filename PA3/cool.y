@@ -141,6 +141,8 @@
     %type <features> feature_list
     %type <feature> method
     %type <feature> attribute
+    %type <formal> arg
+    %type <formals> arg_list
     %type <expression> expr
     
     /* Precedence declarations go here. */
@@ -187,21 +189,39 @@
     | ';' {$$ = nil_Features();}
 
     /* A class method. */
-    method:  OBJECTID'('')'':' TYPEID '{' expr '}'
+    method:  OBJECTID'(' arg_list ')'':' TYPEID '{' expr '}'
     {
-      $$ = method($1, nil_Formals(), $5, $7);
+      $$ = method($1, $3, $6, $8);
     }
 
+    arg: OBJECTID ':' TYPEID 
+    {
+      $$ = formal($1, $3); 
+    }
+
+    arg_list: arg
+    {
+      $$ = single_Formals($1); 
+    }
+    | arg ',' arg_list
+    {
+      $$ = append_Formals(single_Formals($1), $3); 
+    }
+    | {$$ = nil_Formals();}
+
     /* An attribute variable. */
-    attribute:  OBJECTID':' TYPEID
+    attribute: OBJECTID ':' TYPEID
     {
       $$ = attr($1, $3, no_expr());
+    }
+    | OBJECTID ':' TYPEID ASSIGN expr
+    {
+      $$ = attr($1, $3, $5);
     }
 
     expr: BOOL_CONST
     { $$ = bool_const($1);
-    }
-    | INT_CONST
+    } | INT_CONST
     { $$ = int_const($1);
     }
     | OBJECTID ASSIGN INT_CONST
