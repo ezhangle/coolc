@@ -219,6 +219,9 @@
       $$ = attr($1, $3, $5);
     }
 
+    /* ---------------------------------------------------------------------
+        expr 
+       ---------------------------------------------------------------------*/
     expr: BOOL_CONST
     { $$ = bool_const($1);
     } | INT_CONST
@@ -241,9 +244,13 @@
     {
       $$ = plus($1, $3);
     }
-    | LET OBJECTID ':' TYPEID ASSIGN INT_CONST IN INT_CONST 
+    | LET OBJECTID ':' TYPEID ASSIGN INT_CONST IN expr 
     {
-      $$ = let($2, $4, int_const($6), int_const($8));
+      $$ = let($2, $4, int_const($6), $8);
+    }
+    | LET OBJECTID ':' TYPEID IN expr 
+    {
+      $$ = let($2, $4, no_expr(), $6);
     }
     
     /* end of grammar */
