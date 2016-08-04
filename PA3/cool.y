@@ -149,7 +149,8 @@
     
     /* Precedence declarations go here. */
     
-    
+    %left '+' '-'
+    %left '*'
     %%
     /* 
     Save the root of the abstract syntax tree in a global variable.
@@ -170,9 +171,9 @@
     class	: CLASS TYPEID '{' feature_list '}' ';'
     { $$ = class_($2,idtable.add_string("Object"),$4,
     stringtable.add_string(curr_filename)); }
-    | CLASS TYPEID INHERITS TYPEID '{' dummy_feature_list '}' ';'
+    | CLASS TYPEID INHERITS TYPEID '{' feature_list '}' ';'
     { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
-    | error ';'
+    | CLASS error '}' {;} 
     ;
 
     /* Feature list may be empty, but no empty features in list. */
@@ -226,12 +227,13 @@
        ---------------------------------------------------------------------*/
     expr: BOOL_CONST
     { $$ = bool_const($1);
-    } | INT_CONST
+    } 
+    | INT_CONST
     { $$ = int_const($1);
     }
-    | OBJECTID ASSIGN INT_CONST
+    | OBJECTID ASSIGN expr
     {
-      $$ = assign($1, int_const($3));
+      $$ = assign($1, $3);
     }
     | OBJECTID 
     {
@@ -241,6 +243,9 @@
     expr: '(' expr ')' 
     {
       $$ = $2;
+    }
+    | '~' expr 
+    { $$ = neg($2);
     }
     | expr '+' expr
     {
@@ -269,7 +274,10 @@
     expr: block
     {
       $$ = $1;
-    }
+    } 
+    | WHILE expr LOOP expr error { ;}
+    | WHILE expr error  { ;}
+    ;
 
     expr_list: expr ';' expr_list
     {
@@ -289,6 +297,9 @@
     {
       $$ = $2;
     } 
+    | error {;}
+    | '{' '}' error {;}
+    ;
     
     /* end of grammar */
     %%
