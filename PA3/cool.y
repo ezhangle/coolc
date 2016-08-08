@@ -149,8 +149,10 @@
     
     /* Precedence declarations go here. */
     
+    %right "<-" 
+    %nonassoc '=' '<' "<="
     %left '+' '-'
-    %left '*'
+    %left '*' '/'
     %%
     /* 
     Save the root of the abstract syntax tree in a global variable.
@@ -174,6 +176,7 @@
     | CLASS TYPEID INHERITS TYPEID '{' feature_list '}' ';'
     { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
     | CLASS error '}' {;} 
+    | CLASS error ';' {;} 
     ;
 
     /* Feature list may be empty, but no empty features in list. */
@@ -196,6 +199,7 @@
     {
       $$ = method($1, $3, $6, $8);
     }
+    | error {;}
 
     arg: OBJECTID ':' TYPEID 
     {
@@ -251,6 +255,18 @@
     {
       $$ = plus($1, $3);
     }
+    | expr '-' expr
+    {
+      $$ = sub($1, $3);
+    }
+    | expr '*' expr
+    {
+      $$ = mul($1, $3);
+    }
+    | expr '/' expr
+    {
+      $$ = divide($1, $3);
+    }
     | LET OBJECTID ':' TYPEID ASSIGN INT_CONST IN expr 
     {
       $$ = let($2, $4, int_const($6), $8);
@@ -271,23 +287,37 @@
     {
       $$ = string_const($1);
     }
-    expr: block
+    | block
     {
       $$ = $1;
     } 
     | WHILE expr LOOP expr error { ;}
     | WHILE expr error  { ;}
+    | IF expr THEN expr ELSE expr FI
+    {
+      $$ = cond($2, $4, $6);  
+    }
+    | expr '=' expr
+    {
+      $$ = eq($1, $3);
+    }
+    | expr '<' expr
+    {
+      $$ = lt($1, $3);
+    }
+    | expr "<=" expr
+    {
+      $$ = leq($1, $3);
+    }
+    | NEW TYPEID
+    {
+      $$ = new_($2);
+    }
+    | ISVOID expr
+    {
+      $$ = isvoid($2);
+    }
     ;
-
-    expr_list: expr ';' expr_list
-    {
-      $$ = append_Expressions(single_Expressions($1), $3);  
-    }
-    | expr
-    {
-      $$ = single_Expressions($1);
-    }
-    | {$$ = nil_Expressions();}
 
     block: '{' expr_list '}'
     {
@@ -300,6 +330,16 @@
     | error {;}
     | '{' '}' error {;}
     ;
+
+    expr_list: expr ';' expr_list
+    {
+      $$ = append_Expressions(single_Expressions($1), $3);  
+    }
+    | expr
+    {
+      $$ = single_Expressions($1);
+    }
+    | {$$ = nil_Expressions();}
     
     /* end of grammar */
     %%
