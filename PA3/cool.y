@@ -233,9 +233,9 @@
     {
       $$ = single_Expressions($1); 
     }
-    | arg ',' args_list
+    | args_list ',' arg
     {
-      $$ = append_Expressions(single_Expressions($1), $3); 
+      $$ = append_Expressions($1, single_Expressions($3)); 
     }
     | {$$ = nil_Expressions();}
 
