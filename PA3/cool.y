@@ -133,6 +133,7 @@
     %type <program> program
     %type <classes> class_list
     %type <class_> class
+    %token <symbol> SELF
     
     /* You will want to change the following line. */
     %type <features> dummy_feature_list
@@ -141,18 +142,25 @@
     %type <features> feature_list
     %type <feature> method
     %type <feature> attribute
-    %type <formal> arg
-    %type <formals> arg_list
-    %type <expression> expr
+    %type <formal> formal
+    %type <formals> formals
+    %type <expression> arg
+    %type <expressions> args_list
+    %type <expression> expr let_stmt
     %type <expressions> expr_list
     %type <expression> block
+    %type <expression> assign
+    %type <symbol> self
     
     /* Precedence declarations go here. */
     
-    %right "<-" 
+    %right ASSIGN
+    %right NOT
     %nonassoc '=' '<' "<="
     %left '+' '-'
     %left '*' '/'
+    %left ISVOID
+    %right '~'
     %%
     /* 
     Save the root of the abstract syntax tree in a global variable.
@@ -195,26 +203,41 @@
     | ';' {$$ = nil_Features();}
 
     /* A class method. */
-    method:  OBJECTID'(' arg_list ')'':' TYPEID '{' expr '}'
+    method:  OBJECTID'(' formals ')'':' TYPEID '{' expr '}'
     {
       $$ = method($1, $3, $6, $8);
     }
     | error {;}
 
-    arg: OBJECTID ':' TYPEID 
+    formal: OBJECTID ':' TYPEID 
     {
       $$ = formal($1, $3); 
     }
 
-    arg_list: arg
+    formals: formal 
     {
       $$ = single_Formals($1); 
     }
-    | arg ',' arg_list
+    | formal ',' formals
     {
       $$ = append_Formals(single_Formals($1), $3); 
     }
     | {$$ = nil_Formals();}
+
+    arg: expr 
+    {
+      $$ = $1; 
+    }
+
+    args_list: arg
+    {
+      $$ = single_Expressions($1); 
+    }
+    | arg ',' args_list
+    {
+      $$ = append_Expressions(single_Expressions($1), $3); 
+    }
+    | {$$ = nil_Expressions();}
 
     /* An attribute variable. */
     attribute: OBJECTID ':' TYPEID
@@ -235,13 +258,22 @@
     | INT_CONST
     { $$ = int_const($1);
     }
-    | OBJECTID ASSIGN expr
+    | OBJECTID assign
     {
-      $$ = assign($1, $3);
+      $$ = assign($1, $2);
     }
     | OBJECTID 
     {
       $$ = object($1);
+    }
+    | OBJECTID '(' args_list ')'
+    {
+      $$ = dispatch(object(new Entry("self", 4, 255)), $1, $3);
+    }
+
+    assign: ASSIGN expr
+    {
+      $$ = $2;
     }
 
     expr: '(' expr ')' 
@@ -266,14 +298,6 @@
     | expr '/' expr
     {
       $$ = divide($1, $3);
-    }
-    | LET OBJECTID ':' TYPEID ASSIGN INT_CONST IN expr 
-    {
-      $$ = let($2, $4, int_const($6), $8);
-    }
-    | LET OBJECTID ':' TYPEID IN expr 
-    {
-      $$ = let($2, $4, no_expr(), $6);
     }
     | WHILE expr LOOP expr POOL
     {
@@ -318,6 +342,24 @@
       $$ = isvoid($2);
     }
     ;
+
+    expr: LET let_stmt 
+    {
+      $$ = $2;
+    }
+
+    let_stmt: OBJECTID ':' TYPEID IN expr
+    {
+      $$ = let($1, $3, no_expr(), $5);
+    }
+    | OBJECTID ':' TYPEID ',' let_stmt
+    {
+      $$ = let($1, $3, no_expr(), $5);
+    }
+    | OBJECTID ':' TYPEID ASSIGN expr IN expr
+    {
+      $$ = let($1, $3, $5, $7);
+    }
 
     block: '{' expr_list '}'
     {
