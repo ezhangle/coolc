@@ -151,6 +151,8 @@
     %type <expression> block
     %type <expression> assign
     %type <symbol> self
+    %type <case_> branch
+    %type <cases> branch_list
     
     /* Precedence declarations go here. */
     
@@ -185,6 +187,7 @@
     { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
     | CLASS error '}' {;} 
     | CLASS error ';' {;} 
+    | CLASS error '{' feature_list'}' ';' {;}
     ;
 
     /* Feature list may be empty, but no empty features in list. */
@@ -270,6 +273,14 @@
     {
       $$ = dispatch(object(new Entry("self", 4, 255)), $1, $3);
     }
+    | OBJECTID '.' OBJECTID '(' args_list ')'
+    {
+      $$ = dispatch(object($1), $3,$5);
+    }
+    | OBJECTID '@' TYPEID '.' OBJECTID '(' args_list ')'
+    {
+      $$ = static_dispatch(object($1), $3, $5, $7);
+    };
 
     assign: ASSIGN expr
     {
@@ -341,7 +352,24 @@
     {
       $$ = isvoid($2);
     }
+    | CASE expr OF branch_list ESAC ';'
+    {
+      $$ = typcase($2, $4); 
+    } | CASE error {;}
     ;
+
+    branch: OBJECTID ':' TYPEID DARROW expr ';'
+    {
+      $$ = branch($1, $3, $5);
+    }
+
+    branch_list: branch_list ';' branch
+    {
+      $$ = append_Cases($1, single_Cases($3));
+    }
+    | branch
+    { $$ = single_Cases($1);}
+    | {$$ = nil_Cases();}
 
     expr: LET let_stmt 
     {
