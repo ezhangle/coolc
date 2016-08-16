@@ -23,6 +23,7 @@ In this online course there are four programming assignments. Weirdly enough
 the numbering starts at 2 (consult the course's content for explanation).
 Here's a quick summary of each project with a list of files that I had to
 modify in order to pass the assignment.
+
 1. **Lexer** (PA2)
     ..* core files: PA2/src/cool.flex
     ..* Pass rate: 63/63
