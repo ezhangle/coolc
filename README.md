@@ -25,11 +25,11 @@ Here's a quick summary of each project with a list of files that I had to
 modify in order to pass the assignment.
 
 1. **Lexer** (PA2)
-    ..* core files: PA2/src/cool.flex
-    ..* Pass rate: 63/63
+  * core files: PA2/src/cool.flex
+  * Pass rate: 63/63
 2. **Parser** (PA3)
-    ..* core files: PA3/cool.y
-    ..* Pass rate: 65/70
+  * core files: PA3/cool.y
+  * Pass rate: 65/70
 
 How-to
 -------
