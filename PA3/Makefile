@@ -1,79 +1,68 @@
-
-ASSN = 3
-CLASS= cs143
-CLASSDIR= /usr/class/cs143/cool
-# LIB= -lfl
-AR= gar
-ARCHIVE_NEW= -cr
-RANLIB= gar -qs
-
-SRC= cool.y cool-tree.handcode.h good.cl bad.cl README
-CSRC= parser-phase.cc utilities.cc stringtab.cc dumptype.cc \
-      tree.cc cool-tree.cc tokens-lex.cc  handle_flags.cc \
-      cool-parse.cc
-HGEN= cool-parse.h
-LIBS= lexer semant cgen
-CFIL= ${CSRC} ${CGEN}
-HFIL= cool-tree.h cool-tree.handcode.h 
-LSRC= Makefile
+#========================================================================
+# FILE:
+#   Makefile
+#
+# AUTHOR:
+#   zimzum@github 
+#
+# DESCRIPTION:
+#	The Makefile for building the parser.
+#
+#   -------------------------------------
+#   Sample usage
+#   -------------------------------------
+#   To build type the following in the current directory:
+#
+#   ~/cool/PA3$ make clean; make
+#
+#   All binaries, except for the parser, are build in the PARSER_BIN
+#   directory. 
+#	
+#
+# License: MIT
+#========================================================================
+#-----------------------
+#  BIN DIR
+#-----------------------
 PARSER_BIN = bin
-OBJS= $(patsubst %.cc, $(PARSER_BIN)/%.o, $(CFIL))
-OUTPUT= good.output bad.output
+
+#-----------------------
+#  SOURCE/OBJECT FILES
+#-----------------------
+source_files = parser-phase.cc utilities.cc stringtab.cc dumptype.cc \
+			   tree.cc cool-tree.cc tokens-lex.cc  handle_flags.cc \
+			   cool-parse.cc
+
+object_files = $(patsubst %.cc, $(PARSER_BIN)/%.o, $(source_files))
 
 
-CPPINCLUDE= -Iinclude/
-
-BFLAGS = -d -v -y -b cool --debug -p cool_yy
-
-CC=g++
-CFLAGS=-g -Wall -Wno-unused -Wno-deprecated -Wno-write-strings -DDEBUG ${CPPINCLUDE}
-FLEX=flex ${FFLAGS}
-BISON= bison ${BFLAGS}
-DEPEND = ${CC} -MM ${CPPINCLUDE}
+#-----------------------
+#  COMPILATION VARIABLES 
+#-----------------------
+BFLAGS     = -d -v -y -b cool --debug -p cool_yy
+CC         = g++
+CFLAGS     = -g -Wall -Wno-unused -Wno-deprecated -Wno-write-strings -DDEBUG ${CPPINCLUDE}
+CPPINCLUDE = -Iinclude/
 
 
-lsource: ${LSRC}
+#-----------------------
+#  TARGETS
+#-----------------------
+parser: $(chkdirs) ${object_files}
+	${CC} ${CFLAGS} ${object_files} ${LIB} -o parser
 
-${OUTPUT}:	parser good.cl bad.cl
-	@rm -f ${OUTPUT}
-	./myparser good.cl >good.output 2>&1 
-	-./myparser bad.cl >bad.output 2>&1 
-
-parser: ${OBJS}
-	${CC} ${CFLAGS} ${OBJS} ${LIB} -o parser
-
+#-----------------------
+#  IMPLICIT RULES 
+#-----------------------
 bin/%.o: src/%.cc
 	${CC} ${CFLAGS} -c $< -o $@
+
+chkdirs:
+	$(MKDIR) $(LEX_BIN)
 
 src/cool-parse.cc cool-parse.h: cool.y
 	bison ${BFLAGS} cool.y
 	mv -f cool.tab.c src/cool-parse.cc
 
-dotest:	parser good.cl bad.cl
-	@echo "\nRunning parser on good.cl\n"
-	-./myparser good.cl 
-	@echo "\nRunning parser on bad.cl\n"
-	-./myparser bad.cl
-
-${LIBS}:
-	${CLASSDIR}/etc/link-object ${ASSN} $@
-
-# These dependencies allow you to get the starting files for
-# the assignment.  They will not overwrite a file you already have.
-
-${SRC} :								
-	-${CLASSDIR}/etc/copy-skel ${ASSN} ${SRC}
-
-${LSRC} :
-	-${CLASSDIR}/etc/link-shared ${ASSN} ${LSRC}
-
-submit-clean: ${OUTPUT}
-	-rm -f *.s core ${OBJS} ${CGEN} ${HGEN} lexer *~ parser cgen semant
-
 clean :
-	-rm -f ${OUTPUT} *.s core ${OBJS} ${CGEN} ${HGEN} parser cgen semant *~ *.a *.o
-
-clean-compile:
-	@-rm -f core ${OBJS} ${CGEN} ${HGEN} ${LSRC}
-
--include ${CFIL:.cc=.d}
+	-rm -f  *.s core ${object_files} parser  *~ *.a *.o
