@@ -9,6 +9,7 @@ This repository contains my solutions to the programming assignments for the
 online course on [Compilers](https://lagunita.stanford.edu/courses/Engineering/Compilers/Fall2014/about).
 All the source files were originally downloaded from the course's website. I
 contributed by:
+
 1. Completing the missing core bits (summarised in the next section), which
    are part of the assignments.
 2. Modifying and simplifying Makefiles so that these sub-projects build nicely
