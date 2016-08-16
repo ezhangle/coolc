@@ -135,10 +135,6 @@
     %type <class_> class
     %token <symbol> SELF
     
-    /* You will want to change the following line. */
-    %type <features> dummy_feature_list
-
-    /* Andrzej's types */
     %type <features> feature_list
     %type <feature> method
     %type <feature> attribute
@@ -150,12 +146,10 @@
     %type <expressions> expr_list
     %type <expression> block
     %type <expression> assign
-    %type <symbol> self
     %type <case_> branch
     %type <cases> branch_list
     
-    /* Precedence declarations go here. */
-    
+    /* Precedence declarations. */
     %right ASSIGN
     %right NOT
     %nonassoc '=' '<' "<="
@@ -163,38 +157,46 @@
     %left '*' '/'
     %left ISVOID
     %right '~'
+
     %%
-    /* 
-    Save the root of the abstract syntax tree in a global variable.
-    */
+    /* =============================================================
+        THE GRAMMAR
+       =============================================================*/
+    /* -------------------------------------------------------------
+        PROGRAM
+       -------------------------------------------------------------*/
     program	: class_list	{ @$ = @1; ast_root = program($1); }
     ;
     
+    /* -------------------------------------------------------------
+        CLASS
+       -------------------------------------------------------------*/
     class_list
-    : class			/* single class */
-    { $$ = single_Classes($1);
-    parse_results = $$; }
-    | class_list class	/* several classes */
-    { $$ = append_Classes($1,single_Classes($2)); 
-    parse_results = $$; }
+    : class
+    {
+      $$ = single_Classes($1);
+    }
+    | class_list class
+    { 
+      $$ = append_Classes($1,single_Classes($2)); 
+    }
     ;
     
-    /* If no parent is specified, the class inherits from the Object class. */
     class	: CLASS TYPEID '{' feature_list '}' ';'
-    { $$ = class_($2,idtable.add_string("Object"),$4,
-    stringtable.add_string(curr_filename)); }
+    { 
+      $$ = class_($2,idtable.add_string("Object"),$4,
+           stringtable.add_string(curr_filename));
+    }
     | CLASS TYPEID INHERITS TYPEID '{' feature_list '}' ';'
-    { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
+    { 
+      $$ = class_($2,$4,$6,stringtable.add_string(curr_filename));
+    }
     | CLASS error '}' {;} 
     | CLASS error ';' {;} 
     | CLASS error '{' feature_list'}' ';' {;}
     ;
 
-    /* Feature list may be empty, but no empty features in list. */
-    feature_list: dummy_feature_list {;}
-    dummy_feature_list:		/* empty */
-    {  $$ = nil_Features(); }
-
+    /* Class features */
     feature_list: method ';' feature_list
     {
       $$ = append_Features(single_Features($1), $3);
@@ -203,7 +205,7 @@
     {
       $$ = append_Features(single_Features($1), $3);
     }
-    | ';' {$$ = nil_Features();}
+    | {$$ = nil_Features();}
 
     /* A class method. */
     method:  OBJECTID'(' formals ')'':' TYPEID '{' expr '}'
@@ -217,6 +219,7 @@
       $$ = formal($1, $3); 
     }
 
+    /* Method's formal params */
     formals: formal 
     {
       $$ = single_Formals($1); 
@@ -227,22 +230,8 @@
     }
     | {$$ = nil_Formals();}
 
-    arg: expr 
-    {
-      $$ = $1; 
-    }
 
-    args_list: arg
-    {
-      $$ = single_Expressions($1); 
-    }
-    | args_list ',' arg
-    {
-      $$ = append_Expressions($1, single_Expressions($3)); 
-    }
-    | {$$ = nil_Expressions();}
-
-    /* An attribute variable. */
+    /* Class attribute. */
     attribute: OBJECTID ':' TYPEID
     {
       $$ = attr($1, $3, no_expr());
@@ -253,23 +242,28 @@
     }
 
     /* ---------------------------------------------------------------------
-        expr 
+        EXPRESSIONS
        ---------------------------------------------------------------------*/
+    /* 1. Bool, int and string constants */
     expr: BOOL_CONST
     { $$ = bool_const($1);
     } 
     | INT_CONST
     { $$ = int_const($1);
     }
-    | OBJECTID assign
+    | STR_CONST
     {
-      $$ = assign($1, $2);
+      $$ = string_const($1);
     }
-    | OBJECTID 
+
+    /* 2. Standalone object*/
+    expr: OBJECTID 
     {
       $$ = object($1);
-    }
-    | OBJECTID '(' args_list ')'
+    };
+
+    /* 3. Various forms of dispatch */
+    expr: OBJECTID '(' args_list ')'
     {
       $$ = dispatch(object(new Entry("self", 4, 255)), $1, $3);
     }
@@ -282,16 +276,40 @@
       $$ = static_dispatch(object($1), $3, $5, $7);
     };
 
+    /* 4. Method's arguments */
+    arg: expr 
+    {
+      $$ = $1; 
+    }
+    
+    args_list: arg
+    {
+      $$ = single_Expressions($1); 
+    }
+    | args_list ',' arg
+    {
+      $$ = append_Expressions($1, single_Expressions($3)); 
+    }
+    | {$$ = nil_Expressions();}
+
+    /* 5. Assignement */
+    expr: OBJECTID assign
+    {
+      $$ = assign($1, $2);
+    }
     assign: ASSIGN expr
     {
       $$ = $2;
     }
 
+    /* 6. Allow expressions surrounded with brackets*/
     expr: '(' expr ')' 
     {
       $$ = $2;
     }
-    | '~' expr 
+
+    /* 7. Unary and binary operations */
+    expr: '~' expr 
     { $$ = neg($2);
     }
     | expr '+' expr
@@ -310,27 +328,9 @@
     {
       $$ = divide($1, $3);
     }
-    | WHILE expr LOOP expr POOL
-    {
-      $$ = loop($2, $4);;
-    }
     | NOT expr
     {
       $$ = comp($2);
-    }
-    | STR_CONST
-    {
-      $$ = string_const($1);
-    }
-    | block
-    {
-      $$ = $1;
-    } 
-    | WHILE expr LOOP expr error { ;}
-    | WHILE expr error  { ;}
-    | IF expr THEN expr ELSE expr FI
-    {
-      $$ = cond($2, $4, $6);  
     }
     | expr '=' expr
     {
@@ -352,11 +352,26 @@
     {
       $$ = isvoid($2);
     }
-    | CASE expr OF branch_list ESAC ';'
+
+    /* 8. WHILE loop */
+    expr: WHILE expr LOOP expr POOL
+    {
+      $$ = loop($2, $4);;
+    }
+    | WHILE expr LOOP expr error { ;}
+    | WHILE expr error  { ;}
+
+    /* 9. IF statement */
+    expr: IF expr THEN expr ELSE expr FI
+    {
+      $$ = cond($2, $4, $6);  
+    }
+
+    /* 10. CASE statements */ 
+    expr: CASE expr OF branch_list ESAC ';'
     {
       $$ = typcase($2, $4); 
     } | CASE error {;}
-    ;
 
     branch: OBJECTID ':' TYPEID DARROW expr ';'
     {
@@ -371,6 +386,7 @@
     { $$ = single_Cases($1);}
     | {$$ = nil_Cases();}
 
+    /* 11. LET expressions */
     expr: LET let_stmt 
     {
       $$ = $2;
@@ -389,6 +405,11 @@
       $$ = let($1, $3, $5, $7);
     }
 
+    /* 12. Blocks of expressions */
+    expr: block
+    {
+      $$ = $1;
+    } 
     block: '{' expr_list '}'
     {
       $$ = block($2);
@@ -411,7 +432,9 @@
     }
     | {$$ = nil_Expressions();}
     
-    /* end of grammar */
+    /* ===============================================================
+        END OF GRAMMAR
+       =============================================================== */
     %%
     
     /* This function is called automatically when Bison detects a parse error. */
