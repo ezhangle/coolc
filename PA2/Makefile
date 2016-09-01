@@ -41,7 +41,7 @@ object_files      = $(patsubst %.cc, $(LEX_BIN)/%.o, $(source_files))
 #-----------------------
 #  TARGETS
 #-----------------------
-lexer: ${chkdirs} ${object_files}
+lexer: chkdirs ${object_files}
 	${CC} ${CFLAGS} ${object_files} ${LIB} -o lexer
 
 chkdirs:

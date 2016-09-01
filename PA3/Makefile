@@ -58,7 +58,7 @@ bin/%.o: src/%.cc
 	${CC} ${CFLAGS} -c $< -o $@
 
 chkdirs:
-	$(MKDIR) $(LEX_BIN)
+	$(MKDIR) $(PARSER_BIN)
 
 src/cool-parse.cc cool-parse.h: cool.y
 	bison ${BFLAGS} cool.y
