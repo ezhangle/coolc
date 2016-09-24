@@ -58,6 +58,7 @@ public:
     virtual ~tree_node() { }
     virtual void dump(ostream& stream, int n) = 0;
     int get_line_number();
+    virtual int check() = 0;
     tree_node *set(tree_node *);
 };
 
@@ -131,6 +132,7 @@ public:
     static list_node<Elem> *nil();
     static list_node<Elem> *single(Elem);
     static list_node<Elem> *append(list_node<Elem> *l1,list_node<Elem> *l2);
+    int check() override { return 0;}
 };
 
 char *pad(int n);

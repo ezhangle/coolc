@@ -31,6 +31,23 @@ Class_ class__class::copy_Class_()
    return new class__class(copy_Symbol(name), copy_Symbol(parent), features->copy_list(), copy_Symbol(filename));
 }
 
+int class__class::check() { 
+  if (parent->equal_string("Bool", 4))
+    return 1;
+  else if (parent->equal_string("String", 6))
+    return 1;
+  else if (parent->equal_string("SELF_TYPE", 9))
+    return 1;
+  else
+  {
+    for(int j = features->first(); features->more(j); j = features->next(j))
+    {
+      if (features->nth(j)->check())
+        return 1;
+    }
+  }
+  return 0;
+}
 
 void class__class::dump(ostream& stream, int n)
 {
@@ -57,6 +74,30 @@ void method_class::dump(ostream& stream, int n)
    expr->dump(stream, n+2);
 }
 
+
+ int method_class::check() { 
+   for(int i = formals->first(); formals->more(i); i = formals->next(i))
+   {
+     if (formals->nth(i)->check())
+       return 1;
+   }
+   return expr->check();
+ }
+
+int formal_class::check()
+{
+  if (name->equal_string("self", 4))
+    return 1;
+  else if (type_decl->equal_string("SELF_TYPE", 9))
+    return 1;
+  else
+    return 0;
+}
+
+int Formal_class::check()
+{
+  return 0;
+}
 
 Feature attr_class::copy_Feature()
 {
@@ -113,6 +154,14 @@ void assign_class::dump(ostream& stream, int n)
    stream << pad(n) << "assign\n";
    dump_Symbol(stream, n+2, name);
    expr->dump(stream, n+2);
+}
+
+int assign_class::check()
+{
+  if (name->equal_string("self", 4))
+    return 1;
+  else
+    return 0;
 }
 
 

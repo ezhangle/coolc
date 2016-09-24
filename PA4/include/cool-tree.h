@@ -9,7 +9,6 @@
 //////////////////////////////////////////////////////////
 
 
-#include "tree.h"
 #include "cool-tree.handcode.h"
 
 
@@ -63,6 +62,7 @@ class Formal_class : public tree_node {
 public:
    tree_node *copy()		 { return copy_Formal(); }
    virtual Formal copy_Formal() = 0;
+   int check() override; 
 
 #ifdef Formal_EXTRAS
    Formal_EXTRAS
@@ -77,6 +77,9 @@ class Expression_class : public tree_node {
 public:
    tree_node *copy()		 { return copy_Expression(); }
    virtual Expression copy_Expression() = 0;
+   int check() override { 
+     return 0;
+   }
 
 #ifdef Expression_EXTRAS
    Expression_EXTRAS
@@ -135,6 +138,7 @@ public:
    }
    Program copy_Program();
    void dump(ostream& stream, int n);
+   int check() { return 0;}
 
 #ifdef Program_SHARED_EXTRAS
    Program_SHARED_EXTRAS
@@ -161,6 +165,7 @@ public:
    }
    Class_ copy_Class_();
    void dump(ostream& stream, int n);
+   int check() override;
 
 #ifdef Class__SHARED_EXTRAS
    Class__SHARED_EXTRAS
@@ -187,6 +192,7 @@ public:
    }
    Feature copy_Feature();
    void dump(ostream& stream, int n);
+   int check() override;
 
 #ifdef Feature_SHARED_EXTRAS
    Feature_SHARED_EXTRAS
@@ -211,6 +217,7 @@ public:
    }
    Feature copy_Feature();
    void dump(ostream& stream, int n);
+   int check() { return 0;}
 
 #ifdef Feature_SHARED_EXTRAS
    Feature_SHARED_EXTRAS
@@ -233,6 +240,7 @@ public:
    }
    Formal copy_Formal();
    void dump(ostream& stream, int n);
+   int check() override;
 
 #ifdef Formal_SHARED_EXTRAS
    Formal_SHARED_EXTRAS
@@ -257,6 +265,7 @@ public:
    }
    Case copy_Case();
    void dump(ostream& stream, int n);
+   int check() { return 0;}
 
 #ifdef Case_SHARED_EXTRAS
    Case_SHARED_EXTRAS
@@ -279,6 +288,7 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check() override;
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -305,6 +315,7 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check() { return 0;}
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -329,6 +340,7 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check() { return 0;}
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -353,6 +365,7 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check() { return 0;}
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -375,6 +388,7 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check() { return 0;}
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -397,6 +411,7 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check() { return 0;}
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -417,6 +432,7 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check() { return 0;}
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -443,6 +459,7 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check() { return 0;}
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -465,6 +482,7 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check() { return 0;}
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -487,6 +505,7 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check() { return 0;}
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -509,6 +528,7 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check() { return 0;}
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS

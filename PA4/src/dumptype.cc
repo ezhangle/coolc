@@ -10,7 +10,7 @@
 #include "utilities.h"
 
 // defined in stringtab.cc
-void dump_Symbol(ostream& stream, int padding, Symbol b); 
+void dump_Symbol(ostream& stream, int padding, Symbol b);
 
 // defined in cool.h
 void dump_Boolean(ostream& stream, int padding, Boolean b);
@@ -28,7 +28,7 @@ void dump_Boolean(ostream& stream, int padding, Boolean b);
 //     an output stream
 //     an indentation "n", the number of blanks to insert at the beginning of
 //                         a new line.
-//   
+//
 //  dump_with_types is just a simple pretty printer, formatting the output
 //  to show the AST relationships between nodes and their types.
 //  dump_type is a virtual function, with a separate implementation for
@@ -36,16 +36,16 @@ void dump_Boolean(ostream& stream, int padding, Boolean b);
 //  implement recursive tree traversals in C++; each kind of tree node
 //  has a virtual function that "knows" how to perform the part of
 //  the traversal for that one node.  It may help to know the inheritance hierarchy
-//  of the classes that define the structure of the Cool AST.  In the 
+//  of the classes that define the structure of the Cool AST.  In the
 //  list below, the outer classes are the Phyla which group together
 //  related kinds of abstract tree nodes (e.g., the two kinds of Features
 //  and the many different kinds of Expression).  The inner, indented classes
 //  inherit from the nearest Phyla class; these are the concrete classes that
 //  appear in the AST.
-//   
+//
 //  Program_class
 //     program_class
-// 
+//
 //  Class__class
 //     class_
 //
@@ -166,7 +166,7 @@ void class__class::dump_with_types(ostream& stream, int n)
 // then prints the method name followed by the formal parameters
 // (another use of an iterator, this time access all of the list members
 // of type Formal), the return type, and finally calls dump_type recursively
-// on the method body. 
+// on the method body.
 
 void method_class::dump_with_types(ostream& stream, int n)
 {
@@ -235,7 +235,7 @@ void assign_class::dump_with_types(ostream& stream, int n)
 //
 // static_dispatch_class::dump_with_types prints the expression,
 // static dispatch class, function name, and actual arguments
-// of any static dispatch.  
+// of any static dispatch.
 //
 void static_dispatch_class::dump_with_types(ostream& stream, int n)
 {
@@ -252,8 +252,8 @@ void static_dispatch_class::dump_with_types(ostream& stream, int n)
 }
 
 //
-//   dispatch_class::dump_with_types is similar to 
-//   static_dispatch_class::dump_with_types 
+//   dispatch_class::dump_with_types is similar to
+//   static_dispatch_class::dump_with_types
 //
 void dispatch_class::dump_with_types(ostream& stream, int n)
 {
