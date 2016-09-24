@@ -26,11 +26,17 @@ Here's a quick summary of each project with a list of files that I had to
 modify in order to pass the assignment.
 
 1. **Lexer** (PA2)
+  * status: completed
   * core files: PA2/src/cool.flex
   * Pass rate: 63/63
 2. **Parser** (PA3)
+  * status: completed
   * core files: PA3/cool.y
   * Pass rate: 65/70
+3. **Semantic analysis** (PA4)
+  * status: not completed
+  * core files: PA4/*
+  * Pass rate: 6/75
 
 How-to
 -------
