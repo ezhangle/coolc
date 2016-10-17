@@ -31,6 +31,23 @@ Class_ class__class::copy_Class_()
    return new class__class(copy_Symbol(name), copy_Symbol(parent), features->copy_list(), copy_Symbol(filename));
 }
 
+int class__class::number_of_attrs()
+{
+  int n_of_attrs = 0;
+  
+  Feature f;
+  for(int i = features->first(); features->more(i); i = features->next(i))
+  {
+    f = features->nth(i);
+    if (f->is_attr())
+    {
+      cerr << "Dupa" << endl;
+      n_of_attrs++;
+    }
+  }
+  return n_of_attrs;
+}
+
 
 void class__class::dump(ostream& stream, int n)
 {

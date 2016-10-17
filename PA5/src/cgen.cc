@@ -24,6 +24,7 @@
 
 #include "cgen.h"
 #include "cgen_gc.h"
+#include <string>
 
 extern void emit_string_constant(ostream& str, char *s);
 extern int cgen_debug;
@@ -615,13 +616,110 @@ void CgenClassTable::code_constants()
   inttable.code_string_table(str,intclasstag);
   code_bools(boolclasstag);
 }
+void CgenClassTable::class_nameTab()
+{
+  //
+  // Generate class_nameTab
+  //
+  // A string with the class tags that will be written to the output file.
+  std::string classTags;
 
+  typedef SymtabEntry<Symbol,CgenNode> ScopeEntry;
+  typedef List<ScopeEntry> Scope;
+  typedef List<Scope> ScopeList;
+  ScopeList *i = tbl; 
+  // Loop over the classes in this scope. Note that the first class in this
+  // loop is the last one that has been added/pushed. This affects the way
+  // classTags is being constructed.
+  for (Scope *j = i->hd(); j != NULL; j = j->tl()) {
+    class__class *temp = j->hd()->get_info();
+    // Skip:
+    // * _prim_slot
+    // * SELF_TYPE
+    // * _no_class
+    if (!temp->get_name()->equal_string("_prim_slot", 10) 
+        &&!temp->get_name()->equal_string("SELF_TYPE", 9)
+        && !temp->get_name()->equal_string("_no_class", 9))
+    {
+      int i;
+      char * name = temp->get_name()->get_string();
+      int len = temp->get_name()->get_len();
+      for(i = stringtable.first(); stringtable.more(i); i = stringtable.next(i))
+      {
+        cerr << i << endl;
+        cerr << "str_table:" << stringtable.lookup(i)->get_string() << endl;
+        cerr << "temp:" << temp->get_name()->get_string() << endl;
+        if (stringtable.lookup(i)->equal_string(name, len))
+        {
+          cerr << "temp idx:" << i << endl;
+          break;
+        }
+      }
+      // Adding the class for the current class at the beginning of classTags.
+      classTags = std::string(WORD) + std::string("str_const") + std::to_string(i) + std::string("\n") + classTags; 
+    }
+  }
+
+  str << "class_nameTab;" << endl;
+  str << classTags;
+}
+
+void CgenClassTable::prototype_objects()
+{
+  //
+  // Create prototype objects
+  //
+  typedef SymtabEntry<Symbol,CgenNode> ScopeEntry;
+  typedef List<ScopeEntry> Scope;
+  typedef List<Scope> ScopeList;
+  // I believe that only the top scope should contain class definitions
+  ScopeList *i = tbl; {
+    for (Scope *j = i->hd(); j != NULL; j = j->tl()) {
+      CgenNode *temp = j->hd()->get_info();
+      // Skip:
+      // * _prim_slot
+      // * SELF_TYPE
+      // * _no_class
+      if (!temp->get_name()->equal_string("_prim_slot", 10) 
+          &&!temp->get_name()->equal_string("SELF_TYPE", 9)
+          && !temp->get_name()->equal_string("_no_class", 9))
+      {
+        // Add -1 eye catcher
+        str << WORD << "-1" << endl;
+        str << temp->get_name() << PROTOBJ_SUFFIX << endl;
+        // Class tag 
+        if (temp->get_name()->equal_string("Bool", 4))
+          str << WORD << boolclasstag << endl;
+        else if (temp->get_name()->equal_string("Int", 3))
+          str << WORD << intclasstag << endl;
+        else if (temp->get_name()->equal_string("String", 6))
+          str << WORD <<  stringclasstag << endl;
+        else
+          str << WORD << temp->get_classtag() << endl;
+        // Class size 
+        str << WORD << 3+ temp->number_of_attrs() << endl;
+        // Dispatch pointer 
+        str << WORD << temp->get_name() << "_dispTab:" << endl;
+        // Attributes
+        Feature f;
+        for(int i = temp->features->first(); temp->features->more(i); i = temp->features->next(i))
+        {
+          f = temp->features->nth(i);
+          if (f->is_attr())
+            str << WORD << 0 << endl;
+        }
+      }
+
+    }
+  }
+}
 
 CgenClassTable::CgenClassTable(Classes classes, ostream& s) : nds(NULL) , str(s)
 {
    stringclasstag = 0 /* Change to your String class tag here */;
-   intclasstag =    0 /* Change to your Int class tag here */;
-   boolclasstag =   0 /* Change to your Bool class tag here */;
+   intclasstag    = 0 /* Change to your Int class tag here */;
+   boolclasstag   = 0 /* Change to your Bool class tag here */;
+   classtag       = 0;
 
    enterscope();
    if (cgen_debug) cout << "Building CgenClassTable" << endl;
@@ -650,13 +748,13 @@ void CgenClassTable::install_basic_classes()
 //
   addid(No_class,
 	new CgenNode(class_(No_class,No_class,nil_Features(),filename),
-			    Basic,this));
+			    Basic,this, COOL_INVALID_CLASSTAG));
   addid(SELF_TYPE,
 	new CgenNode(class_(SELF_TYPE,No_class,nil_Features(),filename),
-			    Basic,this));
+			    Basic,this, COOL_INVALID_CLASSTAG));
   addid(prim_slot,
 	new CgenNode(class_(prim_slot,No_class,nil_Features(),filename),
-			    Basic,this));
+			    Basic,this, COOL_INVALID_CLASSTAG));
 
 // 
 // The Object class has no parent class. Its methods are
@@ -677,7 +775,7 @@ void CgenClassTable::install_basic_classes()
            single_Features(method(type_name, nil_Formals(), Str, no_expr()))),
            single_Features(method(copy, nil_Formals(), SELF_TYPE, no_expr()))),
 	   filename),
-    Basic,this));
+    Basic,this, classtag++));
 
 // 
 // The IO class inherits from Object. Its methods are
@@ -700,7 +798,7 @@ void CgenClassTable::install_basic_classes()
             single_Features(method(in_string, nil_Formals(), Str, no_expr()))),
             single_Features(method(in_int, nil_Formals(), Int, no_expr()))),
 	   filename),	    
-    Basic,this));
+    Basic,this, classtag++));
 
 //
 // The Int class has no methods and only a single attribute, the
@@ -712,7 +810,8 @@ void CgenClassTable::install_basic_classes()
 	    Object,
             single_Features(attr(val, prim_slot, no_expr())),
 	    filename),
-     Basic,this));
+     Basic,this, classtag++));
+   intclasstag = classtag - 1;
 
 //
 // Bool also has only the "val" slot.
@@ -720,7 +819,8 @@ void CgenClassTable::install_basic_classes()
     install_class(
      new CgenNode(
       class_(Bool, Object, single_Features(attr(val, prim_slot, no_expr())),filename),
-      Basic,this));
+      Basic,this, classtag++));
+    boolclasstag = classtag - 1;
 
 //
 // The class Str has a number of slots and operations:
@@ -751,7 +851,8 @@ void CgenClassTable::install_basic_classes()
 				   Str, 
 				   no_expr()))),
 	     filename),
-        Basic,this));
+        Basic,this, classtag++));
+   stringclasstag = classtag - 1;
 
 }
 
@@ -778,7 +879,7 @@ void CgenClassTable::install_class(CgenNodeP nd)
 void CgenClassTable::install_classes(Classes cs)
 {
   for(int i = cs->first(); cs->more(i); i = cs->next(i))
-    install_class(new CgenNode(cs->nth(i),NotBasic,this));
+    install_class(new CgenNode(cs->nth(i),NotBasic,this, classtag++));
 }
 
 //
@@ -828,8 +929,13 @@ void CgenClassTable::code()
   if (cgen_debug) cout << "coding constants" << endl;
   code_constants();
 
+  if (cgen_debug) cout << "generating prototype objects" << endl;
+  prototype_objects();
+
+  if (cgen_debug) cout << "generating class_nameTab" << endl;
+  class_nameTab();
+
 //                 Add your code to emit
-//                   - prototype objects
 //                   - class_nameTab
 //                   - dispatch tables
 //
@@ -857,11 +963,12 @@ CgenNodeP CgenClassTable::root()
 //
 ///////////////////////////////////////////////////////////////////////
 
-CgenNode::CgenNode(Class_ nd, Basicness bstatus, CgenClassTableP ct) :
+CgenNode::CgenNode(Class_ nd, Basicness bstatus, CgenClassTableP ct, int classtag) :
    class__class((const class__class &) *nd),
    parentnd(NULL),
    children(NULL),
-   basic_status(bstatus)
+   basic_status(bstatus),
+   classtag(classtag)
 { 
    stringtable.add_string(name->get_string());          // Add class name to string table
 }

@@ -70,12 +70,14 @@ public:
 //    `dump()' prints the symbols in the symbol table.
 //
 
+class CgenClassTable;
 template <class SYM, class DAT>
 class SymbolTable
 {
    typedef SymtabEntry<SYM,DAT> ScopeEntry;
    typedef List<ScopeEntry> Scope;
    typedef List<Scope> ScopeList;
+   friend class CgenClassTable;
 private:
    ScopeList  *tbl;
 public:
@@ -105,11 +107,11 @@ public:
    // Pop the first scope off of the symbol table.
    void exitscope()
    {
-       // It is an error to exit a scope that doesn't exist.
-       if (tbl == NULL) {
-	   fatal_error("exitscope: Can't remove scope from an empty symbol table.");
-       }
-       tbl = tbl->tl();
+     // It is an error to exit a scope that doesn't exist.
+     if (tbl == NULL) {
+       fatal_error("exitscope: Can't remove scope from an empty symbol table.");
+     }
+     tbl = tbl->tl();
    }
 
    // Add an item to the symbol table.
@@ -128,29 +130,29 @@ public:
 
    DAT * lookup(SYM s)
    {
-       for(ScopeList *i = tbl; i != NULL; i=i->tl()) {
-	   for( Scope *j = i->hd(); j != NULL; j = j->tl()) {
-	       if (s == j->hd()->get_id()) {
-		   return (j->hd()->get_info());
-	       }
-	   }
+     for(ScopeList *i = tbl; i != NULL; i=i->tl()) {
+       for( Scope *j = i->hd(); j != NULL; j = j->tl()) {
+         if (s == j->hd()->get_id()) {
+           return (j->hd()->get_info());
+         }
        }
-       return NULL;
+     }
+     return NULL;
    }
 
    // probe the symbol table.  Check the top scope (only) for the item
    // 's'.  If found, return the information field.  If not return NULL.
    DAT *probe(SYM s)
    {
-       if (tbl == NULL) {
-	   fatal_error("probe: No scope in symbol table.");
+     if (tbl == NULL) {
+       fatal_error("probe: No scope in symbol table.");
+     }
+     for(Scope *i = tbl->hd(); i != NULL; i = i->tl()) {
+       if (s == i->hd()->get_id()) {
+         return(i->hd()->get_info());
        }
-       for(Scope *i = tbl->hd(); i != NULL; i = i->tl()) {
-	   if (s == i->hd()->get_id()) {
-	       return(i->hd()->get_info());
-	   }
-       }
-       return(NULL);
+     }
+     return(NULL);
    }
 
    // Prints out the contents of the symbol table  

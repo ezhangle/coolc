@@ -8,6 +8,8 @@ enum Basicness     {Basic, NotBasic};
 #define TRUE 1
 #define FALSE 0
 
+#define COOL_INVALID_CLASSTAG (0xffffffff)
+
 class CgenClassTable;
 typedef CgenClassTable *CgenClassTableP;
 
@@ -17,10 +19,12 @@ typedef CgenNode *CgenNodeP;
 class CgenClassTable : public SymbolTable<Symbol,CgenNode> {
 private:
    List<CgenNode> *nds;
+   // List<CgenNode> PrototypeObjects;
    ostream& str;
    int stringclasstag;
    int intclasstag;
    int boolclasstag;
+   int classtag;
 
 
 // The following methods emit code for
@@ -31,6 +35,8 @@ private:
    void code_bools(int);
    void code_select_gc();
    void code_constants();
+   void prototype_objects();
+   void class_nameTab();
 
 // The following creates an inheritance graph from
 // a list of classes.  The graph is implemented as
@@ -55,17 +61,20 @@ private:
    List<CgenNode> *children;                  // Children of class
    Basicness basic_status;                    // `Basic' if class is basic
                                               // `NotBasic' otherwise
+   int classtag;
 
 public:
    CgenNode(Class_ c,
             Basicness bstatus,
-            CgenClassTableP class_table);
+            CgenClassTableP class_table,
+            int classtag);
 
    void add_child(CgenNodeP child);
    List<CgenNode> *get_children() { return children; }
    void set_parentnd(CgenNodeP p);
    CgenNodeP get_parentnd() { return parentnd; }
    int basic() { return (basic_status == Basic); }
+   int get_classtag(){ return classtag;}
 };
 
 class BoolConst 
