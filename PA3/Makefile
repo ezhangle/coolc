@@ -3,7 +3,7 @@
 #   Makefile
 #
 # AUTHOR:
-#   zimzum@github 
+#   banach-space@github 
 #
 # DESCRIPTION:
 #	The Makefile for building the parser.
@@ -27,6 +27,11 @@
 PARSER_BIN = bin
 
 #-----------------------
+#  SHELL COMMANDS
+#-----------------------
+MKDIR   = mkdir -p
+
+#-----------------------
 #  SOURCE/OBJECT FILES
 #-----------------------
 source_files = parser-phase.cc utilities.cc stringtab.cc dumptype.cc \
@@ -48,17 +53,17 @@ CPPINCLUDE = -Iinclude/
 #-----------------------
 #  TARGETS
 #-----------------------
-parser: $(chkdirs) ${object_files}
+parser: chkdirs ${object_files}
 	${CC} ${CFLAGS} ${object_files} ${LIB} -o parser
+
+chkdirs:
+	$(MKDIR) $(PARSER_BIN)
 
 #-----------------------
 #  IMPLICIT RULES 
 #-----------------------
 bin/%.o: src/%.cc
 	${CC} ${CFLAGS} -c $< -o $@
-
-chkdirs:
-	$(MKDIR) $(PARSER_BIN)
 
 src/cool-parse.cc cool-parse.h: cool.y
 	bison ${BFLAGS} cool.y

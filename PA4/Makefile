@@ -3,7 +3,7 @@
 #   Makefile
 #
 # AUTHOR:
-#   zimzum@github 
+#   banach-space@github 
 #
 # DESCRIPTION:
 #	The Makefile for building the semantic analysis phase.

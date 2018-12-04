@@ -1,29 +1,36 @@
 coolc
 ========
+[![Build Status](https://travis-ci.org/banach-space/coolc.svg?branch=master)](https://travis-ci.org/banach-space/coolc)
 
-A compiler for the Cool programming language.
+A compiler for the [COOL](http://theory.stanford.edu/~aiken/#teaching) -
+Classroom Object Oriented Language invented by [Prof. Alex
+Aiken](http://theory.stanford.edu/~aiken/) for his
+[Compilers](https://web.stanford.edu/class/cs143/) class.
 
 About
 --------
-This repository contains my solutions to the programming assignments for the
-online course on [Compilers](https://lagunita.stanford.edu/courses/Engineering/Compilers/Fall2014/about).
-All the source files were originally downloaded from the course's website. I
-contributed by:
+I created this repository when I was studying for the Stanford [online
+course](https://lagunita.stanford.edu/courses/Engineering/Compilers/Fall2014/about)
+on compilers. All the source files were originally downloaded from the
+course's website. I contributed by:
 
-1. Completing the missing core bits (summarised in the next section), which
-   are part of the assignments.
-2. Modifying and simplifying Makefiles so that these sub-projects build nicely
-   on my Linux machine;
+1. Completing the missing core bits (lexer and parser), as required for
+   the course assignments
+2. Modifying and simplifying `Makefiles` so that these sub-projects build nicely
+   on my Linux machine and in Travis (as opposed to relying on the available VM)
 3. Moving the files around so that the structure of the projects are a bit more
    straightforward (originally these projects were designed to use a lot of
-   symlinks, which isn't very GitHub friendly).
+   symlinks, which isn't very GitHub friendly)
 
-Sub-projects
-------------
+At the point of creating this repository the original source files weren't
+available on GitHub. Do let me know when that changes and I will fork such
+project instead.
+
+Completed assignments
+---------------------
 In this online course there are four programming assignments. Weirdly enough
-the numbering starts at 2 (consult the course's content for explanation).
-Here's a quick summary of each project with a list of files that I had to
-modify in order to pass the assignment.
+the numbering starts at 2. Here's a quick summary of the assignments that I
+have completed so far: 
 
 1. **Lexer** (PA2)
   * status: completed
@@ -33,10 +40,6 @@ modify in order to pass the assignment.
   * status: completed
   * core files: PA3/cool.y
   * Pass rate: 65/70
-3. **Semantic analysis** (PA4)
-  * status: not completed
-  * core files: PA4/*
-  * Pass rate: 6/75
 
 How-to
 -------
@@ -44,8 +47,8 @@ In order to build, go to one of the subdirectories and type
 ```
 $ make
 ```
-This will build the corresponding binary (e.g. lexer or parser). In order to run the tests shipped
-with the course, run the following perl script:
+This will build the corresponding binary (e.g. lexer or parser). In order to
+run the tests available with the course, run the following `perl` script:
 ```
 $ perl pa<id>-grading.pl
 ```

@@ -1,12 +1,16 @@
 dist: trusty
 language: cpp
-compiler:
-  - gcc
+
+before_install:
+  # csh is required by one of the grading scripts
+  - sudo apt-get install -y csh
 script:
   # CLONE AND BUILD GTEST
   - cd PA2
   - make
   - perl pa1-grading.pl -v
+  # The parser requires the lexer. Since my lexer passes 100%, I'm using that.
   - cd ../PA3
+  - cp ../PA2/lexer .
   - make
   - perl pa2-grading.pl -v
