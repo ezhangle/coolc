@@ -1,0 +1,12 @@
+dist: trusty
+language: cpp
+compiler:
+  - gcc
+script:
+  # CLONE AND BUILD GTEST
+  - cd PA2
+  - make
+  - perl pa1-grading.pl -v
+  - cd ../PA3
+  - make
+  - perl pa2-grading.pl -v
