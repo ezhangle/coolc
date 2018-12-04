@@ -1,7 +1,8 @@
 dist: trusty
-addons:
-  packages:
-    -tcsh
+language: cpp
+
+before_install:
+  - sudo apt-get install -y csh
 script:
   # CLONE AND BUILD GTEST
   - cd PA2
