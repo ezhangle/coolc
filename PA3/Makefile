@@ -3,7 +3,7 @@
 #   Makefile
 #
 # AUTHOR:
-#   zimzum@github 
+#   banach-space@github 
 #
 # DESCRIPTION:
 #	The Makefile for building the parser.
@@ -25,6 +25,11 @@
 #  BIN DIR
 #-----------------------
 PARSER_BIN = bin
+
+#-----------------------
+#  SHELL COMMANDS
+#-----------------------
+MKDIR   = mkdir -p
 
 #-----------------------
 #  SOURCE/OBJECT FILES
@@ -51,14 +56,14 @@ CPPINCLUDE = -Iinclude/
 parser: $(chkdirs) ${object_files}
 	${CC} ${CFLAGS} ${object_files} ${LIB} -o parser
 
+chkdirs:
+	$(MKDIR) $(PARSER_BIN)
+
 #-----------------------
 #  IMPLICIT RULES 
 #-----------------------
 bin/%.o: src/%.cc
 	${CC} ${CFLAGS} -c $< -o $@
-
-chkdirs:
-	$(MKDIR) $(PARSER_BIN)
 
 src/cool-parse.cc cool-parse.h: cool.y
 	bison ${BFLAGS} cool.y
