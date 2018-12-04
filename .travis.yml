@@ -8,5 +8,6 @@ script:
   - make
   - perl pa1-grading.pl -v
   - cd ../PA3
+  - cp ../PA2/lexer .
   - make
   - perl pa2-grading.pl -v

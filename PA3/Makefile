@@ -53,7 +53,7 @@ CPPINCLUDE = -Iinclude/
 #-----------------------
 #  TARGETS
 #-----------------------
-parser: $(chkdirs) ${object_files}
+parser: chkdirs ${object_files}
 	${CC} ${CFLAGS} ${object_files} ${LIB} -o parser
 
 chkdirs:
