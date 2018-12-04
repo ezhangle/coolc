@@ -1,7 +1,7 @@
 dist: trusty
-language: cpp
-compiler:
-  - gcc
+addons:
+  packages:
+    -tcsh
 script:
   # CLONE AND BUILD GTEST
   - cd PA2
